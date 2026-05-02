@@ -3,20 +3,41 @@ import { useState, useRef } from "react";
 import { collection, addDoc, updateDoc, doc, serverTimestamp } from "firebase/firestore";
 import { db } from "../firebase";
 
-// Convierte un File a { url: base64, type, name }
-const fileToBase64 = (file) =>
-  new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload  = () => resolve({
-      url:  reader.result,           // data:image/...;base64,...
-      type: file.type.startsWith("video") ? "video" : "image",
-      name: file.name,
-    });
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
+const CLOUD_NAME = "duu6tud55";
+const UPLOAD_PRESET = "qugdt5ua";
 
-// task prop = editar tarea existente | null = nueva tarea
+// Sube un archivo a Cloudinary y devuelve { url, type, name }
+const uploadToCloudinary = async (file, onProgress) => {
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("upload_preset", UPLOAD_PRESET);
+
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`);
+
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) onProgress?.((e.loaded / e.total) * 100);
+    };
+
+    xhr.onload = () => {
+      if (xhr.status === 200) {
+        const data = JSON.parse(xhr.responseText);
+        resolve({
+          url: data.secure_url,
+          type: "image",
+          name: file.name,
+        });
+      } else {
+        reject(new Error("Error al subir a Cloudinary"));
+      }
+    };
+
+    xhr.onerror = () => reject(new Error("Error de red"));
+    xhr.send(formData);
+  });
+};
+
 export default function TaskForm({ onClose, onSuccess, task }) {
   const isEdit = !!task;
 
@@ -39,6 +60,9 @@ export default function TaskForm({ onClose, onSuccess, task }) {
   const [sizeWarning, setSizeWarning]     = useState("");
   const fileRef = useRef();
 
+  const MAX_SIZE_MB = 15;
+  const MAX_SIZE_BYTES = MAX_SIZE_MB * 1024 * 1024;
+
   const categories = ["general", "diseño", "video", "foto", "redacción", "reunión", "otro"];
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
@@ -47,9 +71,8 @@ export default function TaskForm({ onClose, onSuccess, task }) {
     setSizeWarning("");
     const valid = [];
     for (const f of Array.from(incoming)) {
-      // Límite sugerido: 700 KB por imagen para no superar 1 MB del documento
-      if (f.size > 700 * 1024 && f.type.startsWith("image")) {
-        setSizeWarning(`"${f.name}" supera 700 KB. Usa imágenes más pequeñas para evitar errores.`);
+      if (f.size > MAX_SIZE_BYTES) {
+        setSizeWarning(`"${f.name}" supera ${MAX_SIZE_MB} MB. Usa un archivo más pequeño.`);
       } else {
         valid.push(f);
       }
@@ -64,15 +87,22 @@ export default function TaskForm({ onClose, onSuccess, task }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setUploading(true);
-    setUploadProgress(10);
+    setUploadProgress(5);
     try {
-      // Convertir archivos nuevos a Base64
       let converted = [];
+
       if (newFiles.length > 0) {
-        converted = await Promise.all(newFiles.map(fileToBase64));
-        setUploadProgress(70);
+        const progressPer = 85 / newFiles.length;
+        for (let i = 0; i < newFiles.length; i++) {
+          const result = await uploadToCloudinary(
+            newFiles[i],
+            (pct) => setUploadProgress(5 + i * progressPer + pct * progressPer / 100)
+          );
+          converted.push(result);
+        }
       }
 
+      setUploadProgress(92);
       const allMedia = [...existingMedia, ...converted];
 
       if (isEdit) {
@@ -87,14 +117,10 @@ export default function TaskForm({ onClose, onSuccess, task }) {
 
       setUploadProgress(100);
       onSuccess?.();
-      onClose();
+      setTimeout(() => onClose(), 500);
     } catch (err) {
       console.error("Error al guardar:", err);
-      if (err.code === "invalid-argument") {
-        alert("El archivo es demasiado grande para Firestore. Usa imágenes menores a 700 KB.");
-      } else {
-        alert(`Error: ${err.message}`);
-      }
+      alert(`Error al subir: ${err.message}`);
     } finally {
       setUploading(false);
       setUploadProgress(0);
@@ -168,7 +194,6 @@ export default function TaskForm({ onClose, onSuccess, task }) {
                 value={form.deliveryTime} onChange={handleChange} />
             </div>
 
-            {/* ── Archivos ─────────────────────────────────────── */}
             <div className="form-group form-full">
               <label className="form-label">📎 Imágenes</label>
 
@@ -181,7 +206,7 @@ export default function TaskForm({ onClose, onSuccess, task }) {
               >
                 <div style={{ fontSize: "1.5rem", marginBottom: "0.4rem" }}>📁</div>
                 Arrastra imágenes aquí o haz clic para seleccionar
-                <br /><span style={{ fontSize: "0.7rem" }}>Máximo ~700 KB por imagen</span>
+                <br /><span style={{ fontSize: "0.7rem" }}>Máximo {MAX_SIZE_MB} MB por imagen</span>
               </div>
               <input ref={fileRef} type="file" accept="image/*" multiple
                 style={{ display: "none" }} onChange={(e) => handleFiles(e.target.files)} />
@@ -192,7 +217,6 @@ export default function TaskForm({ onClose, onSuccess, task }) {
                 </div>
               )}
 
-              {/* Archivos existentes */}
               {isEdit && existingMedia.length > 0 && (
                 <div style={{ marginTop: "0.8rem" }}>
                   <div style={{ fontSize: "0.65rem", letterSpacing: "2px", textTransform: "uppercase", color: "var(--muted)", marginBottom: "0.4rem" }}>
@@ -214,7 +238,6 @@ export default function TaskForm({ onClose, onSuccess, task }) {
                 </div>
               )}
 
-              {/* Archivos nuevos */}
               {newFiles.length > 0 && (
                 <div style={{ marginTop: "0.8rem" }}>
                   <div style={{ fontSize: "0.65rem", letterSpacing: "2px", textTransform: "uppercase", color: "var(--accent)", marginBottom: "0.4rem" }}>
@@ -238,11 +261,10 @@ export default function TaskForm({ onClose, onSuccess, task }) {
             </div>
           </div>
 
-          {/* Progreso */}
           {uploading && (
             <div style={{ margin: "1rem 0" }}>
               <div style={{ fontSize: "0.75rem", color: "var(--muted)", marginBottom: "0.4rem" }}>
-                {uploadProgress < 100 ? `Guardando... ${Math.round(uploadProgress)}%` : "Finalizando..."}
+                {uploadProgress < 100 ? `Subiendo... ${Math.round(uploadProgress)}%` : "Finalizando..."}
               </div>
               <div style={{ height: 4, background: "var(--border)", borderRadius: 2 }}>
                 <div style={{ height: "100%", background: "var(--accent)", borderRadius: 2,
