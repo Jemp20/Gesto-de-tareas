@@ -8,13 +8,16 @@ const UPLOAD_PRESET = "qugdt5ua";
 
 // Sube un archivo a Cloudinary y devuelve { url, type, name }
 const uploadToCloudinary = async (file, onProgress) => {
+  const isVideo    = file.type.startsWith("video/");
+  const resourceType = isVideo ? "video" : "image";
+
   const formData = new FormData();
   formData.append("file", file);
   formData.append("upload_preset", UPLOAD_PRESET);
 
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
-    xhr.open("POST", `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`);
+    xhr.open("POST", `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/${resourceType}/upload`);
 
     xhr.upload.onprogress = (e) => {
       if (e.lengthComputable) onProgress?.((e.loaded / e.total) * 100);
@@ -25,7 +28,7 @@ const uploadToCloudinary = async (file, onProgress) => {
         const data = JSON.parse(xhr.responseText);
         resolve({
           url: data.secure_url,
-          type: "image",
+          type: resourceType,
           name: file.name,
         });
       } else {
@@ -60,7 +63,7 @@ export default function TaskForm({ onClose, onSuccess, task }) {
   const [sizeWarning, setSizeWarning]     = useState("");
   const fileRef = useRef();
 
-  const MAX_SIZE_MB = 15;
+  const MAX_SIZE_MB = 100;
   const MAX_SIZE_BYTES = MAX_SIZE_MB * 1024 * 1024;
 
   const categories = ["general", "diseño", "video", "foto", "redacción", "reunión", "otro"];
@@ -195,7 +198,7 @@ export default function TaskForm({ onClose, onSuccess, task }) {
             </div>
 
             <div className="form-group form-full">
-              <label className="form-label">📎 Imágenes</label>
+              <label className="form-label">📎 Imágenes y Videos</label>
 
               <div
                 className={`file-drop ${dragging ? "drag-over" : ""}`}
@@ -205,10 +208,10 @@ export default function TaskForm({ onClose, onSuccess, task }) {
                 onClick={() => fileRef.current.click()}
               >
                 <div style={{ fontSize: "1.5rem", marginBottom: "0.4rem" }}>📁</div>
-                Arrastra imágenes aquí o haz clic para seleccionar
-                <br /><span style={{ fontSize: "0.7rem" }}>Máximo {MAX_SIZE_MB} MB por imagen</span>
+                Arrastra imágenes o videos aquí o haz clic para seleccionar
+                <br /><span style={{ fontSize: "0.7rem" }}>Máximo {MAX_SIZE_MB} MB por archivo · JPG, PNG, GIF, MP4, MOV, WebM</span>
               </div>
-              <input ref={fileRef} type="file" accept="image/*" multiple
+              <input ref={fileRef} type="file" accept="image/*,video/*" multiple
                 style={{ display: "none" }} onChange={(e) => handleFiles(e.target.files)} />
 
               {sizeWarning && (
