@@ -30,7 +30,6 @@ export default function TaskCard({ task, isPublic = false }) {
 
   const handleDelete = async (e) => {
     e.stopPropagation();
-    if (!confirm(`¿Eliminar "${task.title}"?`)) return;
     setDeleting(true);
     await deleteDoc(doc(db, "tasks", task.id));
   };
