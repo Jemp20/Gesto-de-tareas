@@ -11,7 +11,7 @@ import { es } from "date-fns/locale";
 
 const MODES = { DIA: "dia", SEMANA: "semana", MES: "mes" };
 
-export default function WeekView({ tasks, onDayClick, selectedDay = null }) {
+export default function WeekView({ tasks, onDayClick, selectedDay = null, isPublic = false }) {
   const [mode,        setMode]        = useState(MODES.SEMANA);
   const [currentDate, setCurrentDate] = useState(new Date());
 
@@ -141,7 +141,7 @@ export default function WeekView({ tasks, onDayClick, selectedDay = null }) {
           ) : (
             <div style={{ marginTop: "0.5rem" }}>
               {getTasksForDay(currentDate).map((t) => (
-                <TaskCard key={t.id} task={t} />
+                <TaskCard key={t.id} task={t} isPublic={isPublic} />
               ))}
             </div>
           )}
