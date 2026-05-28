@@ -147,6 +147,7 @@ body {
 
 .main {
   padding: 2.5rem 3rem;
+  min-width: 0;
   overflow-y: auto;
   position: relative;
 }
@@ -492,8 +493,11 @@ body {
 
 .week-grid {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 0.7rem;
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
 }
 .week-day {
   background: var(--surface);
@@ -501,6 +505,8 @@ body {
   border-radius: var(--radius);
   padding: 0.9rem 0.8rem;
   min-height: 110px;
+  min-width: 0;
+  overflow: hidden;
   cursor: pointer;
   transition: all 0.2s ease;
 }
@@ -713,6 +719,10 @@ body {
 }
 
 @media (max-width: 700px) {
+  .week-grid {
+    grid-template-columns: 1fr;
+  }
+
   .month-weekdays {
     display: none;
   }
@@ -1014,6 +1024,9 @@ body {
   border-radius: 8px;
   box-shadow: var(--shadow);
   margin-bottom: 1.4rem;
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
   padding: 1rem;
 }
 
@@ -1118,6 +1131,7 @@ body {
 
 .public-site .week-grid {
   gap: 0.55rem;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
 }
 
 .public-site .week-day {
@@ -1125,6 +1139,7 @@ body {
   border-color: var(--border);
   border-radius: 8px;
   min-height: 126px;
+  min-width: 0;
 }
 
 .public-site .week-day:hover {
@@ -1154,6 +1169,7 @@ body {
 }
 
 .public-site .week-task-dot {
+  max-width: 100%;
   font-size: 0.72rem;
 }
 
@@ -1241,6 +1257,10 @@ body {
 @media (max-width: 900px) {
   .public-layout {
     grid-template-columns: 1fr;
+  }
+
+  .public-site .week-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .public-sidebar {
