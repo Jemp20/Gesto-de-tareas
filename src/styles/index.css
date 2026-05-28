@@ -541,6 +541,85 @@ body {
   text-overflow: ellipsis;
 }
 
+.calendar-view {
+  min-width: 0;
+}
+
+.month-calendar {
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.month-weekdays,
+.month-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.month-weekdays {
+  margin-bottom: 0.35rem;
+}
+
+.month-weekday {
+  color: var(--muted);
+  font-size: 0.65rem;
+  letter-spacing: 1px;
+  padding: 0.25rem 0;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.month-empty,
+.month-day {
+  min-height: 78px;
+  min-width: 0;
+}
+
+.month-empty {
+  visibility: hidden;
+}
+
+.month-day {
+  border-radius: var(--radius);
+  cursor: pointer;
+  overflow: hidden;
+  padding: 0.45rem 0.55rem;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.month-day:hover {
+  background: var(--surface2) !important;
+  border-color: rgba(240,160,184,0.3) !important;
+}
+
+.month-day-number {
+  font-family: var(--font-head);
+  font-size: 0.9rem;
+  font-weight: 800;
+  line-height: 1.1;
+  margin-bottom: 0.25rem;
+}
+
+.month-task,
+.month-more {
+  font-size: 0.62rem;
+  line-height: 1.45;
+  min-width: 0;
+}
+
+.month-task {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.month-more {
+  color: var(--muted);
+}
+
 .lightbox-overlay {
   position: fixed;
   inset: 0;
@@ -631,6 +710,33 @@ body {
   .form-grid { grid-template-columns: 1fr; }
   .week-grid { grid-template-columns: repeat(3, 1fr); }
   .page-title { font-size: 1.8rem; }
+}
+
+@media (max-width: 700px) {
+  .month-weekdays {
+    display: none;
+  }
+
+  .month-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .month-empty {
+    display: none;
+  }
+
+  .month-day {
+    min-height: 58px;
+    padding: 0.7rem 0.8rem;
+  }
+
+  .month-day-number {
+    font-size: 1.05rem;
+  }
+
+  .month-task {
+    white-space: normal;
+  }
 }
 
 /* Public website redesign. Scoped to avoid touching /admin. */
@@ -1049,6 +1155,37 @@ body {
 
 .public-site .week-task-dot {
   font-size: 0.72rem;
+}
+
+.public-site .month-weekday {
+  color: var(--muted);
+  letter-spacing: 1px;
+}
+
+.public-site .month-day {
+  background: #fffdf8;
+  border-color: var(--border);
+  border-radius: 8px;
+  min-height: 76px;
+}
+
+.public-site .month-day:hover {
+  background: #f7fbfa !important;
+  border-color: var(--accent) !important;
+}
+
+.public-site .month-day.today {
+  background: #eef7f4 !important;
+  border-color: var(--accent) !important;
+}
+
+.public-site .month-day-number {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.public-site .month-task {
+  font-size: 0.68rem;
 }
 
 .public-empty {

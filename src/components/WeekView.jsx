@@ -90,7 +90,7 @@ export default function WeekView({ tasks, onDayClick, selectedDay = null, isPubl
   };
 
   return (
-    <div>
+    <div className="calendar-view">
       {/* ── Controles ── */}
       <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1rem", flexWrap: "wrap" }}>
         {/* Selector de modo */}
@@ -183,56 +183,49 @@ export default function WeekView({ tasks, onDayClick, selectedDay = null, isPubl
 
       {/* ── Vista Mes ── */}
       {mode === MODES.MES && (
-        <div>
+        <div className="month-calendar">
           {/* Cabecera días de la semana */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: "0.3rem", marginBottom: "0.3rem" }}>
+          <div className="month-weekdays">
             {["Lun","Mar","Mié","Jue","Vie","Sáb","Dom"].map((d) => (
-              <div key={d} style={{ fontSize: "0.65rem", color: "var(--muted)", textAlign: "center",
-                letterSpacing: "1px", textTransform: "uppercase", padding: "0.2rem 0" }}>
+              <div key={d} className="month-weekday">
                 {d}
               </div>
             ))}
           </div>
 
           {/* Celdas del mes */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: "0.3rem" }}>
+          <div className="month-grid">
             {/* Espacios vacíos antes del primer día (lunes=0) */}
             {Array.from({ length: (days[0].getDay() + 6) % 7 }).map((_, i) => (
-              <div key={`empty-${i}`} />
+              <div key={`empty-${i}`} className="month-empty" aria-hidden="true" />
             ))}
             {days.map((day) => {
               const dayTasks = getTasksForDay(day);
               return (
                 <div
                   key={day.toISOString()}
+                  className={`month-day ${isToday(day) ? "today" : ""}`}
                   onClick={() => { setCurrentDate(day); setMode(MODES.DIA); }}
                   style={{
                     background: isToday(day) ? "rgba(232,255,71,0.08)" : "var(--surface)",
                     border: `1px solid ${isToday(day) ? "var(--accent)" : "var(--border)"}`,
-                    borderRadius: "var(--radius)",
-                    padding: "0.4rem 0.5rem",
-                    minHeight: 60,
-                    cursor: "pointer",
-                    transition: "border-color 0.15s",
                   }}
                 >
-                  <div style={{
-                    fontFamily: "var(--font-head)", fontWeight: 800, fontSize: "0.9rem",
-                    color: isToday(day) ? "var(--accent)" : "var(--text)",
-                    marginBottom: "0.2rem",
-                  }}>
+                  <div className="month-day-number" style={{ color: isToday(day) ? "var(--accent)" : "var(--text)" }}>
                     {format(day, "d")}
                   </div>
                   {dayTasks.slice(0, 2).map((t, i) => (
-                    <div key={i} style={{
-                      fontSize: "0.6rem", color: t.status === "done" ? "var(--success)" : "var(--accent2)",
-                      whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
-                    }}>
+                    <div
+                      key={i}
+                      className="month-task"
+                      style={{ color: t.status === "done" ? "var(--success)" : "var(--accent2)" }}
+                      title={t.title}
+                    >
                       • {t.title}
                     </div>
                   ))}
                   {dayTasks.length > 2 && (
-                    <div style={{ fontSize: "0.6rem", color: "var(--muted)" }}>+{dayTasks.length - 2}</div>
+                    <div className="month-more">+{dayTasks.length - 2}</div>
                   )}
                 </div>
               );
